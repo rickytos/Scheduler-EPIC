@@ -1,0 +1,12 @@
+# Ignore obj directories 
+**/obj/
+
+# Ignore bin directories
+**/bin/
+
+# Ignore NuGet package files
+.nuget
+packages
+
+# Ignore solution user options
+*.suo
