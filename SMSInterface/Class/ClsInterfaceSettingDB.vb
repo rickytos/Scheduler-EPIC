@@ -3,6 +3,7 @@ Imports System.Text
 Imports System.Data.SqlClient
 
 Public Class ClsInterfaceSettingDB
+    Inherits DataBaseServices
     Public Shared Function getDataSMTP_DMMS_PR(pConStr As String) As DataTable
         Dim sql As String
         Using con As New SqlConnection(pConStr)
@@ -26,41 +27,27 @@ Public Class ClsInterfaceSettingDB
     End Function
 
     Public Shared Function getData(pConStr As String) As DataTable
-        Dim sql As String
-        Using con As New SqlConnection(pConStr)
-            con.Open()
+        Try
+            Dim results = CallProcedures("GetEmailSettings")
 
-            sql = " select  isnull(JSON_Path, '') as JSON_Path, isnull(JSON_PathBackup, '') as JSON_PathBackup, " & vbCrLf & _
-                "           isnull(XML_IABudget_Path, '') as XML_IABudget_Path, isnull(XML_IABudget_PathBackup, '') as XML_IABudget_PathBackup, " & vbCrLf & _
-                "           isnull(XML_SAP_Path, '') as XML_SAP_Path, isnull(XML_SAP_PathBackup, '') as XML_SAP_PathBackup, " & vbCrLf & _
-                "           isnull(XML_IAPrice_Path, '') as XML_IAPrice_Path, isnull(IAMI_PressPart_Path, '') as IAMI_PressPart_Path, isnull(IAMI_PressPart_PathBackup, '') as IAMI_PressPart_PathBackup, " & vbCrLf & _
-                "           isnull(IAMI_PressPart_XMLToSAP_Path, '') as IAMI_PressPart_XMLToSAP_Path, " & vbCrLf & _
-                "           isnull(CostHistory_XMLToSAP_Path, '') as CostHistory_XMLToSAP_Path, " & vbCrLf & _
-                "           isnull(XML_PurchaseRequest_Path, '') as XML_PurchaseRequest_Path, " & vbCrLf & _
-                "           isnull(XML_PurchaseRequest_PathBackup, '') as XML_PurchaseRequest_PathBackup, " & vbCrLf & _
-                "           isnull(XML_PurchaseRequest_PathFailed, '') as XML_PurchaseRequest_PathFailed, " & vbCrLf & _
-                "           isnull(XML_PurchaseRequest_PathOut, '') as XML_PurchaseRequest_PathOut, " & vbCrLf & _
-                "           isnull(GoodsReceive_XMLToDMMS_Path, '') as GoodsReceive_XMLToDMMS_Path, " & vbCrLf & _
-                "           IsNull(MaterialMasterXML_ToSAP_Path,'') as MaterialMasterXML_ToSAP_Path, " & vbCrLf & _
-                "           IsNull(MaterialMasterXML_ToSAP_PathBackup,'') as MaterialMasterXML_ToSAP_PathBackup, " & vbCrLf & _
-                "           IsNull(MaterialMasterXML_Resp_Pth,'') as MaterialMasterXML_Resp_Pth, " & vbCrLf & _
-                "           IsNull(MaterialMasterXML_Resp_BackupPth,'') as MaterialMasterXML_Resp_BackupPth, " & vbCrLf & _
-                "           IsNull(IR_XML_Req_Path,'') as IR_XML_Req_Path, " & vbCrLf & _
-                "           IsNull(IR_XML_Req_BackupPath,'') as IR_XML_Req_BackupPath, " & vbCrLf & _
-                "           IsNull(IR_XML_Res_Path,'') as IR_XML_Res_Path, " & vbCrLf & _
-                "           IsNull(IR_XML_Res_BackupPath,'') as IR_XML_Res_BackupPath " & vbCrLf & _
-                "           IsNull(PAQuotReqPath,'') as PAQuotReqPath, " & vbCrLf & _
-                "           IsNull(PAQuotResPath,'') as PAQuotResPath " & vbCrLf & _
-                "           IsNull(PAQuotResBackupPath,'') as PAQuotResBackupPath, " & vbCrLf & _
-                "   from    SendEmail_Setting "
+            If Not String.IsNullOrEmpty(results.ResultMessage) Then
+                Throw New ArgumentException(results.ResultMessage)
+            End If
 
-            Dim cmd As New SqlCommand(sql, con)
-            Dim da As New SqlDataAdapter(cmd)
-            Dim dt As New DataTable
-            da.Fill(dt)
 
-            Return dt
-        End Using
+            Return results.DataResult
+
+        Catch ex As Exception
+            Console.WriteLine(ex.Message)
+
+            Return New DataTable()
+        End Try
+    End Function
+
+    Public Shared Function getData() As CallProcedureResult
+
+        Return CallProcedures("GetEmailSettings")
+
     End Function
 
     Public Shared Function getDataApprovalSchedule(pConStr As String) As DataTable

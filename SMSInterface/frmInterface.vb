@@ -126,28 +126,29 @@ Public Class frmInterface
 
         'Interace MasPIS
         MASPISServices.GenQuotationMasPis(ConStr, Rtb1)
+        MASPISServices.MASPISProcess(ConStr, Rtb1)
 
         'Interface CostHistory
 
-        Try
-            MaterialMasterServices.InterfaceMaterialMasterProcess(ConStr, Rtb1)
-        Catch ex As IOException When ex.Message.Contains("The network path was not found")
-            ls_StepProcess = "[" & ex.Message.ToString() & "] END The network path was not found. Material Master" & vbCrLf
-            up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
-        Catch ex As Exception
-            ls_StepProcess = "[" & ex.Message.ToString() & "] END Error Interface Material Master Response" & vbCrLf
-            up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
-        End Try
+        'Try
+        '    MaterialMasterServices.InterfaceMaterialMasterProcess(ConStr, Rtb1)
+        'Catch ex As IOException When ex.Message.Contains("The network path was not found")
+        '    ls_StepProcess = "[" & ex.Message.ToString() & "] END The network path was not found. Material Master" & vbCrLf
+        '    up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
+        'Catch ex As Exception
+        '    ls_StepProcess = "[" & ex.Message.ToString() & "] END Error Interface Material Master Response" & vbCrLf
+        '    up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
+        'End Try
 
-        Try
-            InfoRecordServices.InterfaceRecordProcess(ConStr, Rtb1)
-        Catch ex As IOException When ex.Message.Contains("The network path was not found")
-            ls_StepProcess = "[" & ex.Message.ToString() & "] END The network path was not found. Info Record" & vbCrLf
-            up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
-        Catch ex As Exception
-            ls_StepProcess = "[" & ex.Message.ToString() & "] END Error Interface Info Record Response" & vbCrLf
-            up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
-        End Try
+        'Try
+        '    InfoRecordServices.InterfaceRecordProcess(ConStr, Rtb1)
+        'Catch ex As IOException When ex.Message.Contains("The network path was not found")
+        '    ls_StepProcess = "[" & ex.Message.ToString() & "] END The network path was not found. Info Record" & vbCrLf
+        '    up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
+        'Catch ex As Exception
+        '    ls_StepProcess = "[" & ex.Message.ToString() & "] END Error Interface Info Record Response" & vbCrLf
+        '    up_gridProcess(Rtb1, 4, 0, ls_StepProcess)
+        'End Try
 
         ls_StepProcess = "" & vbCrLf
         ls_StepProcess = ls_StepProcess & "[" & Format(Now, "yyyy-MM-dd HH:mm:ss") & "] End Manual Process ..." & vbCrLf
@@ -278,6 +279,7 @@ Public Class frmInterface
 
                 'Interface MasPis
                 MASPISServices.GenQuotationMasPis(ConStr, Rtb1)
+                MASPISServices.MASPISProcess(ConStr, Rtb1)
 
             End If
 

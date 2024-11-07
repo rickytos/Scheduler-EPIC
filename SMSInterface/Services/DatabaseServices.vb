@@ -3,6 +3,11 @@ Imports System.Reflection
 
 Public Class DataBaseServices
     Inherits DataBaseHelper
+    Public Enum QueryType
+        'DataTable
+        Scalar
+        NonQuery
+    End Enum
     Public Shared Function GetConnectionString() As String
         Return Builder.ConnectionString
     End Function
@@ -23,6 +28,34 @@ Public Class DataBaseServices
         Catch ex As Exception
             Dim result As New DataTable
             Return New CallProcedureResult With {.DataResult = result, .ErrorMessage = ex.Message}
+        End Try
+    End Function
+
+    Protected Shared Function ExecuteQuery(ByVal queryString As String, ByVal queryType As QueryType) As CallProcedureResult
+        Dim result = New CallProcedureResult()
+
+        Try
+            Using conn As New SqlConnection(GetConnectionString)
+
+                Dim cmd As New SqlCommand(queryString, conn)
+                cmd.CommandType = CommandType.StoredProcedure
+
+                conn.Open()
+
+                Select Case queryType
+                    Case queryType.Scalar
+                        result.ScalarResult = cmd.ExecuteScalar()
+                        result.BooleanResult = result.ScalarResult IsNot Nothing
+
+                        Return result
+                    Case queryType.NonQuery
+                        result.BooleanResult = (cmd.ExecuteNonQuery > 0)
+                        Return result
+                End Select
+
+            End Using
+        Catch ex As Exception
+            Return New CallProcedureResult With {.ErrorMessage = ex.Message}
         End Try
     End Function
 
@@ -208,8 +241,9 @@ Public Class DataBaseServices
     ''' <param name="parameterArray">The object that contains the stored procedure name, parameters, and optionally parameters to exclude.</param>
     ''' <returns>A <see cref="CallProcedureResult"/> containing the result of the stored procedure or an error message if an exception occurs.</returns>
     Protected Shared Function CallProcedures(Of T)(ByVal parameterArray As ParamCallFunction(Of T), Optional ByVal outputParams As String = Nothing) As CallProcedureResult
+        Dim result As New CallProcedureResult()
         Try
-            Using conn As New SqlConnection(GetConnectionString)
+            Using conn As New SqlConnection(GetConnectionString())
                 Dim sql As String = parameterArray.StoreProcedure
                 Dim cmd As New SqlCommand(sql, conn)
                 cmd.CommandType = CommandType.StoredProcedure
@@ -228,7 +262,7 @@ Public Class DataBaseServices
                     End If
                 Next
 
-                Dim ds As New DataTable
+                Dim ds As New DataTable()
 
                 If outputParams IsNot Nothing Then
                     Dim outputParam As New SqlParameter("@" + outputParams, SqlDbType.NVarChar, 40)
@@ -239,20 +273,91 @@ Public Class DataBaseServices
                     cmd.ExecuteNonQuery()
                     conn.Close()
 
-                    Return New CallProcedureResult With {.DataResult = ds, .ErrorMessage = "", .OutputString = cmd.Parameters("@" + outputParams).Value.ToString()}
+                    result.DataResult = ds
+                    result.BooleanResult = True
+                    result.ResultCode = 0 ' Set a specific result code for successful execution
+                    result.OutputString = cmd.Parameters("@" + outputParams).Value.ToString()
+                Else
+                    Dim da As New SqlDataAdapter(cmd)
+                    da.Fill(ds)
+
+                    result.DataResult = ds
+                    result.BooleanResult = True
+                    result.ResultCode = 0 ' Set a specific result code for successful execution
                 End If
 
-                Dim da As New SqlDataAdapter(cmd)
-
-                da.Fill(ds)
-
-                Return New CallProcedureResult With {.DataResult = ds, .ErrorMessage = ""}
             End Using
         Catch ex As Exception
-            Dim result As New DataTable
-            Return New CallProcedureResult With {.DataResult = result, .ErrorMessage = ex.Message}
+            Dim resultDataTable As New DataTable()
+            result.DataResult = resultDataTable
+            result.BooleanResult = False ' Indicate failure
+            result.ResultCode = -1 ' Set a specific result code for errors
+            result.ErrorMessage = ex.Message
+            result.ResultMessage = "An error occurred while executing the stored procedure."
         End Try
+
+        Return result
     End Function
+
+    Protected Shared Function CallProcedures(Of T)(ByVal parameterArray As ParamCallFunction(Of T), ByVal dbManager As DataBaseHelper, Optional ByVal outputParams As String = Nothing) As CallProcedureResult
+        Dim result As New CallProcedureResult()
+        Try
+
+            Dim sql As String = parameterArray.StoreProcedure
+            Dim cmd As New SqlCommand(sql, dbManager.SqlConnection, dbManager.SqlTransaction)
+            cmd.CommandType = CommandType.StoredProcedure
+
+            Dim props As PropertyInfo() = GetType(T).GetProperties()
+
+            For Each prop In props
+                Dim propName = "@" + prop.Name
+                Dim propValue = prop.GetValue(parameterArray.Parameter, Nothing)
+
+                Dim isParExcludeExists As Boolean = parameterArray.ExcludeParameter IsNot Nothing AndAlso parameterArray.ExcludeParameter.Contains(prop.Name)
+
+                ' Add the parameter to the command if it is not in the exclude list and has a value
+                If Not isParExcludeExists AndAlso propValue IsNot Nothing Then
+                    cmd.Parameters.AddWithValue(propName, propValue)
+                End If
+            Next
+
+            Dim ds As New DataTable()
+
+            If outputParams IsNot Nothing Then
+                Dim outputParam As New SqlParameter("@" + outputParams, SqlDbType.NVarChar, 40)
+                outputParam.Direction = ParameterDirection.Output
+                cmd.Parameters.Add(outputParam)
+
+                dbManager.SqlConnection.Open()
+                cmd.ExecuteNonQuery()
+                dbManager.SqlConnection.Close()
+
+                result.DataResult = ds
+                result.BooleanResult = True
+                result.ResultCode = 0 ' Set a specific result code for successful execution
+                result.OutputString = cmd.Parameters("@" + outputParams).Value.ToString()
+            Else
+                Dim da As New SqlDataAdapter(cmd)
+                da.Fill(ds)
+
+                result.DataResult = ds
+                result.BooleanResult = True
+                result.ResultCode = 0 ' Set a specific result code for successful execution
+            End If
+
+        Catch ex As Exception
+            Dim resultDataTable As New DataTable()
+            result.DataResult = resultDataTable
+            result.BooleanResult = False ' Indicate failure
+            result.ResultCode = -1 ' Set a specific result code for errors
+            result.ErrorMessage = ex.Message
+            result.ResultMessage = "An error occurred while executing the stored procedure."
+        End Try
+
+        Return result
+    End Function
+
+
 
 
     'Using Database Transaction
@@ -363,6 +468,8 @@ Public Class DataBaseServices
             Return (New CallProcedureResult With {.ErrorMessage = ex.Message})
         End Try
     End Function
+
+
 End Class
 
 #Region "PARAMETER CLASS"
@@ -375,11 +482,13 @@ Public Class ParamCallFunction(Of T)
 End Class
 
 Public Class CallProcedureResult
+    Public BooleanResult As Boolean
     Public ResultCode As Integer
     Public DataResult As DataTable
     Public DataSetResult As DataSet
     Public ResultMessage As String = String.Empty
     Public ErrorMessage As String = String.Empty
     Public OutputString As String = String.Empty
+    Public ScalarResult As Object
 End Class
 #End Region

@@ -79,3 +79,40 @@
     End Sub
 End Class
 
+Public Class SendEmailSettingParams
+    Public Property SMTP_User As String
+    Public Property SMTP_Password As String
+    Public Property SMTP_Port As String
+    Public Property SMTP_Address As String
+    Public Property Email As String
+    Public Property JSON_Path As String
+    Public Property JSON_PathBackup As String
+    Public Property XMLESSBudget_Path As String
+    Public Property XMLESSBudget_PathBackup As String
+    Public Property XMLSAP_Path As String
+    Public Property XMLSAP_PathBackup As String
+    Public Property XMLIAPrice_Path As String
+    Public Property IAMIPressPartLocalComponent_Path As String
+    Public Property IAMIPressPartLocalComponent_PathBackup As String
+    Public Property IAMIPressPartLocalComponentXMLToSAP_Path As String
+    Public Property CostHistoryXMLToSAP_Path As String
+    Public Property PurchaseRequest_Path As String
+    Public Property PurchaseRequest_PathBackup As String
+    Public Property PurchaseRequest_PathFailed As String
+    Public Property PurchaseRequest_PathOut As String
+    Public Property GoodsReceiveXMLToDMMS_Path As String
+    Public Property MaterialMasterXMLtoSAP_Path As String
+    Public Property MaterialMasterXMLtoSAP_BackupPath As String
+    Public Property MaterialMasterXML_Resp_Pth As String
+    Public Property MaterialMasterXML_Resp_BackupPth As String
+    Public Property IR_XML_ReqPath As String
+    Public Property IR_XML_ReqPath_Backup As String
+    Public Property IR_XML_RespPath As String
+    Public Property IR_XML_RespPath_Backup As String
+    Public Property PAQuotReqPath As String
+    Public Property PAQuotResPath As String
+    Public Property PAQuotResBackupPath As String
+
+End Class
+
+

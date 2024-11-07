@@ -62,6 +62,12 @@ Module mdlMain
     Public gs_IR_XMLtoSAP_Path_Res As String = ""
     Public gs_IR_XMLtoSAP_BackupPath_Res As String = ""
 
+    'MASPIS
+    Public gs_PAQuotReqPath As String = ""
+    Public gs_PAQuotResPath As String = ""
+    Public gs_PAQuotResBackupPath As String = ""
+
+
     Public Db As SqlConnection
     Public Builder As SqlConnectionStringBuilder
     Public nRetry As Integer

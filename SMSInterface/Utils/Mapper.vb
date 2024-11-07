@@ -9,7 +9,13 @@
                     Dim propertyName As String = column.ColumnName
 
                     writer.WriteStartElement(propertyName)
-                    writer.WriteString(Trim(dt.Rows(iRow)(propertyName)))
+                    Dim value = dt.Rows(iRow)(propertyName)
+
+                    If Not Convert.IsDBNull(value) AndAlso Not String.IsNullOrEmpty(value.ToString()) Then
+                        writer.WriteString(Trim(value.ToString()))
+                    Else
+                        writer.WriteString("")
+                    End If
                     writer.WriteEndElement()
                 Next
 

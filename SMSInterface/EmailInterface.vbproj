@@ -116,6 +116,7 @@
     <Compile Include="Class\clsJSONArray.vb" />
     <Compile Include="DTO\CostHistory.vb" />
     <Compile Include="DTO\InfoRecord.vb" />
+    <Compile Include="DTO\InterfaceSettingClassDto.vb" />
     <Compile Include="DTO\MaterialMaster.vb" />
     <Compile Include="DTO\QuotationMasPis.vb" />
     <Compile Include="DTO\ResponseStatus.vb" />
@@ -176,6 +177,7 @@
     <Compile Include="Services\Procedures\SPInfoRecord.vb" />
     <Compile Include="Services\Procedures\SPMaterialMaster.vb" />
     <Compile Include="Services\Procedures\SPQuotationMasPis.vb" />
+    <Compile Include="Services\Procedures\SPSettings.vb" />
     <Compile Include="Utils\GridProcess.vb" />
     <Compile Include="Utils\Mapper.vb" />
     <Compile Include="Utils\StaticValue.vb" />

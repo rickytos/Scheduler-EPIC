@@ -9,6 +9,7 @@ Public Class DataBaseHelper
 
     Public Sub New()
         cnString = Builder.ConnectionString
+        conn = New SqlConnection(cnString)
         conn.Open()
         transaction = conn.BeginTransaction()
         transactionActive = True ' Mark transaction as active

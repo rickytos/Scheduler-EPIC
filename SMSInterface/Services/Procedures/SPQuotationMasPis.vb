@@ -21,20 +21,37 @@ Public Class SPQuotationMasPis
     End Function
 
     'TODO : add Cost Target
-    Public Shared Function SAPCostTarget(ByVal Param As CostHistorySAPRes) As CallProcedureResult
+    Public Shared Function SAPCostTarget(ByVal Param As QuotationMaspisCostTarget) As CallProcedureResult
 
-        Dim newParam As New ParamCallFunction(Of CostHistorySAPRes) With {.StoreProcedure = "SP_IF_GetResponseQuotation", .Parameter = Param}
+        Dim newParam As New ParamCallFunction(Of QuotationMaspisCostTarget) With {.StoreProcedure = "SP_IF_GetCostTargetQuotation", .Parameter = Param}
 
-        Return CallProcedures(Of CostHistorySAPRes)(newParam)
+        Return CallProcedures(Of QuotationMaspisCostTarget)(newParam)
+
+    End Function
+
+    Public Shared Function IsAlreadyGetResp(ByVal quotNumber As String) As Boolean
+
+        Dim queryString = String.Format("SELECT response FROM PA_Quotation_Interface WHERE Quotation_No = '{0}'", quotNumber)
+
+        Return ExecuteQuery(queryString, QueryType.NonQuery).BooleanResult
 
     End Function
 
-    Public Shared Function SAPInfoRecord(ByVal Param As CostHistorySAPRes) As CallProcedureResult
+    Public Shared Function IsMtrlResExists(ByVal quotNumber As String, ByVal PartNo As String) As Object
 
-        Dim newParam As New ParamCallFunction(Of CostHistorySAPRes) With {.StoreProcedure = "Upd_SAPCostHistoryResponse", .Parameter = Param}
+        Dim queryString = String.Format("SELECT * FROM PAQuotationTrack_History WHERE [Quotation_No] = '{0}' AND [Part_No] = '{1}'", quotNumber, PartNo)
 
-        Return CallProcedures(Of CostHistorySAPRes)(newParam)
+        Return ExecuteQuery(queryString, QueryType.NonQuery).BooleanResult
 
     End Function
+
+    'TODO: For Info Record
+    'Public Shared Function SAPInfoRecord(ByVal Param As CostHistorySAPRes) As CallProcedureResult
+
+    '    Dim newParam As New ParamCallFunction(Of CostHistorySAPRes) With {.StoreProcedure = "Upd_SAPCostHistoryResponse", .Parameter = Param}
+
+    '    Return CallProcedures(Of CostHistorySAPRes)(newParam)
+
+    'End Function
 
 End Class

@@ -17,6 +17,10 @@ Public Class MASPISServices
 
     Private conStr As String = ""
 
+    Private Enum ProcessType
+        Response
+        CostTarget
+    End Enum
     'Private generalPath As GeneralTextPath
 
 #End Region
@@ -36,10 +40,10 @@ Public Class MASPISServices
         Try
             Dim statussend As Boolean = False
 
-            Dim dtPath = ClsInterfaceSettingDB.getData(ConStr)
+            Dim pathResult As CallProcedureResult = ClsInterfaceSettingDB.getData()
 
-            If dtPath.Rows.Count > 0 Then
-                xmlPath_req = Trim(dtPath.Rows(0).Item("IF_Maspis_XMLtoSAP_Path"))
+            If String.IsNullOrEmpty(pathResult.ResultMessage) Then
+                xmlPath_req = Trim(pathResult.DataResult.Rows(0).Item("PAQuotReqPath"))
             Else
                 Throw New ArgumentException(" Automatic process error ... please setting " & titleServices & " Path ")
             End If
@@ -112,79 +116,189 @@ Public Class MASPISServices
     '########################################################################################################################################
     '  Quotaiton To Get XM From SAP
     '########################################################################################################################################
-    Public Sub MASPISProcess(ByVal ConStr As String, ByVal rtbox As RichTextBox)
+    Public Shared Sub MASPISProcess(ByVal ConStr As String, ByVal rtbox As RichTextBox)
         Try
 
             Dim dtPath = ClsInterfaceSettingDB.getData(ConStr)
 
             If dtPath.Rows.Count > 0 Then
-                xmlPath_res = Trim(dtPath.Rows(0).Item("IF_MasPis_RespSAP_Path"))
-                xmlPathBackup_res = Trim(dtPath.Rows(0).Item("IF_MasPis_RespSAP_BackupPath"))
+                xmlPath_res = Trim(dtPath.Rows(0).Item("PAQuotResPath"))
+                xmlPathBackup_res = Trim(dtPath.Rows(0).Item("PAQuotResBackupPath"))
             Else
                 ShowMessage(rtbox, StaticValue.STATUSERROR, " Automatic Process Error ... Please Setting Interface for " & titleServices & " - Response Path ")
                 Exit Sub
             End If
 
-            Dim di As New IO.DirectoryInfo(xmlPath_res)
-            Dim getFileString As String = "Out" & quotNameReq & ""
-            Dim aryFi As IO.FileInfo() = di.GetFiles("*QuotationMasPis*.xml")
-
-            Dim fi As IO.FileInfo
-            Dim j As Integer
-            Dim jmlFile As Integer = aryFi.Length
-            For Each fi In aryFi
-                Dim xmlfilename = fi.Name
-                Dim xmlfilenameLocation = fi.DirectoryName
-
-                ShowMessage(rtbox, StaticValue.STATUSINFO, " Start Interface " & titleServices & " Response ==> " & xmlfilename)
-                WriteToDB(ConStr, xmlfilenameLocation, xmlfilename, rtbox)
-
-                'MOVEFILE
-                Utils.MoveXMLFile(xmlPath_res & "\", xmlPathBackup_res & "\", xmlfilename)
-                ShowMessage(rtbox, StaticValue.STATUSINFO, " End process Interface " & titleServices & " ... file name ==> " & xmlfilename & " and move file ")
-
-            Next
+            ' Call to check for response or cost target files
+            Dim fileList As FileInfo() = IsResponseOrCostTarget()
+            If fileList IsNot Nothing AndAlso fileList.Length > 0 Then
+                Check(fileList, rtbox, ConStr)
+            Else
+                ShowMessage(rtbox, StaticValue.STATUSINFO, "No relevant XML files found.")
+            End If
 
         Catch ex As Exception
             ShowMessage(rtbox, StaticValue.STATUSERROR, "" + ex.Message + ex.StackTrace)
         End Try
     End Sub
 
+    Private Shared Function IsResponseOrCostTarget() As FileInfo()
+        Dim di As New IO.DirectoryInfo(xmlPath_res)
 
-    Private Function WriteToDB(ByVal Constr As String, ByVal xmlfilenameLocation As String, ByVal xmlfilename As String, ByVal rtbox As RichTextBox)
+        Dim costTarget As FileInfo() = di.GetFiles("*OutCostTarget*.xml")
+        Dim QuotationMaspis As FileInfo() = di.GetFiles("*OutQuotationMaspis*.xml")
+
+        Return costTarget.Concat(QuotationMaspis).ToArray()
+
+    End Function
+
+    Public Shared Sub Check(aryFi As FileInfo(), ByVal rtbox As RichTextBox, ByVal conStr As String)
+        If aryFi.Length = 0 Then
+            ShowMessage(rtbox, StaticValue.STATUSINFO, "No files to process.")
+            Return
+        End If
+
+        Dim responseMsg As String = "OutQuotationMaspis"
+        Dim costMsg As String = "OutCostTarget"
+
+        For Each fi As FileInfo In aryFi
+            Dim xmlfilename = fi.Name.ToLower()
+            Dim xmlfilenameLocation = fi.DirectoryName
+
+
+
+            If xmlfilename.Contains(responseMsg.ToLower()) Then
+                WriteToDBResponse(conStr, xmlfilenameLocation, xmlfilename, rtbox) ' Call the SP for QuotationMasPis
+            ElseIf xmlfilename.Contains(costMsg.ToLower()) Then
+                WriteToDBCostTarget(conStr, xmlfilenameLocation, xmlfilename, rtbox) ' Call the SP for CostTarget
+            End If
+
+            ' Move the file
+            Utils.MoveXMLFile(xmlPath_res & "\", xmlPathBackup_res & "\", xmlfilename)
+            ShowMessage(rtbox, StaticValue.STATUSINFO, "End process Interface " & titleServices & " ... file name ==> " & xmlfilename & " and move file ")
+        Next
+    End Sub
+    Private Shared Function WriteToDBResponse(ByVal Constr As String, ByVal xmlfilenameLocation As String, ByVal xmlfilename As String, ByVal rtbox As RichTextBox)
         Try
-            Dim doc As XDocument = XDocument.Load(xmlfilenameLocation + "\" + xmlfilename)
-            Dim XMLMaterials As IEnumerable(Of XElement) = doc.Root.Elements("FT_QUOTATIONMASPIS_RESP").Elements("item")
+            ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start Interface {0} Response ==> {1}", titleServices, xmlfilename))
+
+            Dim doc As XDocument = XDocument.Load(System.IO.Path.Combine(xmlfilenameLocation, xmlfilename))
+            Dim XMLMaterials As IEnumerable(Of XElement) = doc.Root.Elements("FT_QUOTATION_RESPONSE").Elements("item")
+
+            Dim quotNo = XMLMaterials.First().Element("QUOTATION").Value
+
+            Dim isAlreadyResponded = SPQuotationMasPis.IsAlreadyGetResp(quotNo)
+
+            If isAlreadyResponded Then
+                ShowMessage(rtbox, StaticValue.STATUSWRNING, String.Format("{0} with quotatiion no {1} Is already responsed is null or empty and will be skipped", quotNameReq, quotNo))
+                Return False
+            End If
+
+            ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start process {0} Response ==> Quotation Number : {1}", quotNameReq, quotNo))
+
+            ' Process each item in the XML
             For Each XEL1 As XElement In XMLMaterials
+                Dim QuotationRes As New QuotationMasPisRes()
+                PopulateQuotationRes(XEL1, QuotationRes)
 
-                Dim QuotationRes As New QuotationMasPisRes
+                Dim sapMaterial = QuotationRes.MATERIAL
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start material SAP response ==> Part Number : {0}", sapMaterial))
 
-                For Each prop In GetType(QuotationMasPisRes).GetProperties()
-                    Dim propName As String = prop.Name
-                    Dim propValue As Object = XEL1.Element(propName).Value
+                Dim isExists = SPQuotationMasPis.IsMtrlResExists(quotNo, QuotationRes.MATERIAL)
 
-                    If propValue IsNot Nothing Then
-                        prop.SetValue(QuotationRes, propValue, Nothing)
-                    End If
-
-                Next
-
-                ShowMessage(rtbox, StaticValue.STATUSINFO, " Start upload " & quotNameReq & " Response ==> " & quotName & " Number :  " & QuotationRes.QUOTATION)
-
-                If QuotationRes.QUOTATION Is Nothing Or QuotationRes.QUOTATION = "" Then
-                    ShowMessage(rtbox, StaticValue.STATUSWRNING, " " & quotNameReq & " For SAP Number :  " & QuotationRes.QUOTATION & " Null or empty it will be skipped")
-                Else
-                    ShowMessage(rtbox, StaticValue.STATUSINFO, " Insert " & quotNameReq & " For SAP Number :  " & QuotationRes.QUOTATION & " with " & quotName & " : " & QuotationRes.QUOTATION)
+                If isExists Then
+                    ShowMessage(rtbox, StaticValue.STATUSWRNING, String.Format("For Material SAP : {0} is null or empty and will be skipped", sapMaterial))
+                    Continue For
                 End If
 
-                SPQuotationMasPis.SAPQuotationResponse(QuotationRes)
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Insert {0} For SAP Number: {1}", quotNo, sapMaterial))
 
-                ShowMessage(rtbox, StaticValue.STATUSINFO, "End upload " & quotNameReq & " Response ==> " & quotName & " Number :  " & QuotationRes.QUOTATION)
+                Dim resultResponse = SPQuotationMasPis.SAPQuotationResponse(QuotationRes)
+                Dim isSuccessUploaded = resultResponse.BooleanResult
+
+                If isSuccessUploaded Then
+                    ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Success upload {0} Response ==> {1}", quotNameReq, sapMaterial))
+                Else
+                    Throw New ArgumentNullException(String.Format("Error on : {0} ", resultResponse.ErrorMessage))
+                End If
+
+
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("End upload {0} Response ==> {1}", quotNameReq, sapMaterial))
             Next
+            Return True
         Catch ex As Exception
-            ShowMessage(rtbox, StaticValue.STATUSERROR, "Info Record Response => ERROR: " + ex.Message + " " + ex.StackTrace)
+            ShowMessage(rtbox, StaticValue.STATUSERROR, String.Format("End upload {0} Response ==> ERROR: {1}, STACKTRACE: {2}", quotNameReq, ex.Message, ex.StackTrace))
+            Return False
         End Try
     End Function
+
+    Private Shared Function WriteToDBCostTarget(ByVal Constr As String, ByVal xmlfilenameLocation As String, ByVal xmlfilename As String, ByVal rtbox As RichTextBox)
+        Try
+            ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start Interface {0} COSTTARGET with Response ==> {1}", titleServices, xmlfilename))
+
+            Dim doc As XDocument = XDocument.Load(System.IO.Path.Combine(xmlfilenameLocation, xmlfilename))
+            Dim XMLMaterials As IEnumerable(Of XElement) = doc.Root.Elements("FT_COSTTARGET_RESPONSE").Elements("item")
+
+            Dim quotNo = XMLMaterials.First().Element("QUOTATION").Value
+            Dim isAlreadyResponded = SPQuotationMasPis.IsAlreadyGetResp(quotNo)
+
+            If isAlreadyResponded Then
+                ShowMessage(rtbox, StaticValue.STATUSWRNING, String.Format("Cost Target with quotatiion no {1} Is already responsed is null or empty and will be skipped", quotNameReq, quotNo))
+                Return False
+            End If
+
+            ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start process {0} Response ==> Quotation Number : {1}", quotNameReq, quotNo))
+
+            ' Process each item in the XML
+            For Each XEL1 As XElement In XMLMaterials
+                Dim CostTarget As New QuotationMaspisCostTarget()
+                PopulateQuotationRes(XEL1, CostTarget)
+
+                Dim sapMaterial = CostTarget.MATERIAL
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Start material SAP response ==> Part Number : {0}", sapMaterial))
+
+                'Dim isExists = SPQuotationMasPis.IsMtrlResExists(quotNo, CostTarget.MATERIAL)
+
+                'If isExists Then
+                '    ShowMessage(rtbox, StaticValue.STATUSWRNING, String.Format("For Material SAP : {0} is null or empty and will be skipped", sapMaterial))
+                '    Continue For
+                'End If
+
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Insert {0} For SAP Number: {1}", quotNo, sapMaterial))
+
+                Dim resultResponse = SPQuotationMasPis.SAPCostTarget(CostTarget)
+                Dim isSuccessUploaded = resultResponse.BooleanResult
+
+                If isSuccessUploaded Then
+                    ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("Success upload {0} Response ==> {1}", quotNameReq, sapMaterial))
+                Else
+                    Throw New ArgumentNullException(String.Format("Error on : {0} ", resultResponse.ErrorMessage))
+                End If
+
+                ShowMessage(rtbox, StaticValue.STATUSINFO, String.Format("End upload {0} Response ==> {1}", quotNameReq, sapMaterial))
+            Next
+            Return True
+        Catch ex As Exception
+            ShowMessage(rtbox, StaticValue.STATUSERROR, String.Format("End upload {0} Response ==> ERROR: {1}, STACKTRACE: {2}", quotNameReq, ex.Message, ex.StackTrace))
+            Return False
+        End Try
+    End Function
+
+
+    Private Shared Function PopulateQuotationRes(Of T)(ByVal XEL1 As XElement, ByRef propParam As T) As T
+        For Each prop In GetType(T).GetProperties()
+            ' Get the XML element by property name
+            Dim xmlElement As XElement = XEL1.Element(prop.Name)
+
+            ' Check if the element exists and has a value
+            If xmlElement IsNot Nothing AndAlso xmlElement.Value IsNot Nothing Then
+                prop.SetValue(propParam, xmlElement.Value, Nothing)
+            End If
+        Next
+        Return propParam
+    End Function
+
+
 
     Private Shared Function WriteToXML(ByVal xmlFilePath As String, ByVal dtMasPis As DataTable) As ResponseStatus
         Try
@@ -198,7 +312,7 @@ Public Class MASPISServices
             writer.WriteString("http://iamiepic2")
             writer.WriteStartElement("FI_FILEXML")
             writer.WriteEndElement()
-            writer.WriteStartElement("FT_QUOTATION")
+            writer.WriteStartElement("FT_QUOTATION_REQUEST")
 
             Mapper.Map(Of QuotationMasPisReq)(dtMasPis, writer, "item")
 
