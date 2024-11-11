@@ -82,6 +82,10 @@ Public Class frmSetting
             gs_PAQuotResPath = Trim(dt.Rows(0).Item("PAQuotResPath"))
             gs_PAQuotResBackupPath = Trim(dt.Rows(0).Item("PAQuotResBackupPath"))
 
+            gs_PAInfoRecordMaspis_ReqPath = Trim(dt.Rows(0).Item("PAInfoRecordMaspis_ReqPath"))
+            gs_PAInfoRecordMaspis_ResPath = Trim(dt.Rows(0).Item("PAInfoRecordMaspis_ResPath"))
+            gs_PAInfoRecordMaspis_ResBackupPath = Trim(dt.Rows(0).Item("PAInfoRecordMaspis_ResBackupPath"))
+
         Else
             gs_JSONPath = ""
             gs_JSONPathBackup = ""
@@ -112,6 +116,12 @@ Public Class frmSetting
             gs_PAQuotReqPath = String.Empty
             gs_PAQuotResPath = String.Empty
             gs_PAQuotResBackupPath = String.Empty
+
+            gs_PAInfoRecordMaspis_ReqPath = String.Empty
+            gs_PAInfoRecordMaspis_ResPath = String.Empty
+            gs_PAInfoRecordMaspis_ResBackupPath = String.Empty
+
+
         End If
 
         txtSMTPAddress_DMMS_PR.Text = gs_SMTPAddress_DMMS_PR
@@ -151,6 +161,11 @@ Public Class frmSetting
         txtQuotationRequestPath.Text = gs_PAQuotReqPath
         txtQuotationResponsePath.Text = gs_PAQuotResPath
         txtQuotationResponseBackupPath.Text = gs_PAQuotResBackupPath
+
+        txtInfoRecordMaspis.Text = gs_PAInfoRecordMaspis_ReqPath
+        txtInfoRecordMaspisResp.Text = gs_PAInfoRecordMaspis_ResPath
+        txtInfoRecordMaspisRespBackup.Text = gs_PAInfoRecordMaspis_ResBackupPath
+
     End Sub
 
     Public Shared Function UpdateSMTP_Setting_DMMS_PR(ByVal pConStr As String, ByVal pSMTPAddress_DMMS_PR As String, ByVal pSMTPPort_DMMS_PR As String, ByVal pSMTPUser_DMMS_PR As String, ByVal pSMTPPassword_DMMS_PR As String, _
@@ -277,6 +292,10 @@ Public Class frmSetting
         If Not ValidateTextBox(txtQuotationRequestPath, "Please input Quotation Request's Path Folder!") Then Return False
         If Not ValidateTextBox(txtQuotationResponsePath, "Please input Quotation Response's Path Folder!") Then Return False
         If Not ValidateTextBox(txtQuotationResponseBackupPath, "Please input Quotation Response's Backup Path Folder!") Then Return False
+
+        If Not ValidateTextBox(txtInfoRecordMaspis, "Please input Info Record Request's Path Folder!") Then Return False
+        If Not ValidateTextBox(txtInfoRecordMaspisResp, "Please input Info Record Response's Path Folder!") Then Return False
+        If Not ValidateTextBox(txtInfoRecordMaspisRespBackup, "Please input Info Record Response's Backup Path Folder!") Then Return False
 
         Return True
     End Function
@@ -418,7 +437,10 @@ Public Class frmSetting
             .IR_XML_RespPath_Backup = txtIR_XML_ResponseBackupPath.Text.Trim(),
             .PAQuotReqPath = txtQuotationRequestPath.Text.Trim(),
             .PAQuotResPath = txtQuotationResponsePath.Text.Trim(),
-            .PAQuotResBackupPath = txtQuotationResponseBackupPath.Text.Trim()
+            .PAQuotResBackupPath = txtQuotationResponseBackupPath.Text.Trim(),
+            .PAInfoRecordMaspis_ReqPath = txtInfoRecordMaspis.Text.Trim(),
+            .PAInfoRecordMaspis_ResPath = txtInfoRecordMaspisResp.Text.Trim(),
+            .PAInfoRecordMaspis_ResBackupPath = txtInfoRecordMaspisRespBackup.Text.Trim()
         }
 
     End Function

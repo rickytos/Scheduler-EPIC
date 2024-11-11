@@ -67,6 +67,10 @@ Module mdlMain
     Public gs_PAQuotResPath As String = ""
     Public gs_PAQuotResBackupPath As String = ""
 
+    Public gs_PAInfoRecordMaspis_ReqPath As String = ""
+    Public gs_PAInfoRecordMaspis_ResPath As String = ""
+    Public gs_PAInfoRecordMaspis_ResBackupPath As String = ""
+
 
     Public Db As SqlConnection
     Public Builder As SqlConnectionStringBuilder

@@ -112,6 +112,9 @@ Public Class SendEmailSettingParams
     Public Property PAQuotReqPath As String
     Public Property PAQuotResPath As String
     Public Property PAQuotResBackupPath As String
+    Public Property PAInfoRecordMaspis_ReqPath As String
+    Public Property PAInfoRecordMaspis_ResPath As String
+    Public Property PAInfoRecordMaspis_ResBackupPath As String
 
 End Class
 

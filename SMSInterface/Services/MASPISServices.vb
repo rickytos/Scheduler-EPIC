@@ -8,12 +8,20 @@ Public Class MASPISServices
     Protected Shared quotNameReq As String = "QuotationMasPis"
     Protected Shared quotName As String = "Quotation"
 
+    Protected Shared infoRecordNameReq As String = "InfoRecordMasPis"
+    Protected Shared infoRecordName As String = "InfoRecord"
+
 
     Private Shared xmlPath_req As String = ""
     Private Shared xmlPathBackup_req As String = ""
 
     Private Shared xmlPath_res As String = ""
     Private Shared xmlPathBackup_res As String = ""
+
+    Private Shared xmlIrecordPath_req As String = ""
+
+    Private Shared xmlIrecordPath_res As String = ""
+    Private Shared xmlIrecordPathBackup_res As String = ""
 
     Private conStr As String = ""
 
@@ -43,11 +51,10 @@ Public Class MASPISServices
             Dim pathResult As CallProcedureResult = ClsInterfaceSettingDB.getData()
 
             If String.IsNullOrEmpty(pathResult.ResultMessage) Then
-                xmlPath_req = Trim(pathResult.DataResult.Rows(0).Item("PAQuotReqPath"))
+                xmlIrecordPath_req = Trim(pathResult.DataResult.Rows(0).Item("PAInfoRecordMaspis_ReqPath"))
             Else
                 Throw New ArgumentException(" Automatic process error ... please setting " & titleServices & " Path ")
             End If
-
 
             Dim result As CallProcedureResult = SPQuotationMasPis.SAPQuotationRequest()
 
@@ -66,7 +73,16 @@ Public Class MASPISServices
 
                 tempLocalFile = "In" & quotNameReq & "_" & Format(Now, "yyyymmdd_hhmmss_mss") & ".xml"
 
-                Dim writeResp As ResponseStatus = WriteToXML(tempLocalPath & tempLocalFile, result.DataResult)
+                'writer.WriteStartElement("ns0:MT_EPIC2_Quotation_Req")
+                'writer.WriteStartAttribute("xmlns:ns0")
+                'writer.WriteString("http://iamiepic2")
+                'writer.WriteStartElement("FI_FILEXML")
+                'writer.WriteEndElement()
+                'writer.WriteStartElement("FT_QUOTATION_REQUEST")
+
+                Dim writeElement = New XmlStartElement() With {.StartElementXML = "ns0:MT_EPIC2_Quotation_Req", .StartAttribute = "xmlns:ns0", .WriteString = "http://iamiepic2", .StartElementXMLFile = String.Empty, .StartElemtnXMLRequest = "FT_QUOTATION_REQUEST"}
+
+                Dim writeResp As ResponseStatus = WriteToXML(tempLocalPath & tempLocalFile, result.DataResult, writeElement)
 
                 If writeResp.StatusResp = False Then
                     ShowMessage(rtbox, 2, "START Generate " & titleServices & " XML To SAP!")
@@ -79,7 +95,7 @@ Public Class MASPISServices
                 '=====================================
 
                 'Move XML File
-                My.Computer.FileSystem.MoveFile(tempLocalPath & tempLocalFile, xmlPath_req & "\" & tempLocalFile, True)
+                My.Computer.FileSystem.MoveFile(tempLocalPath & tempLocalFile, xmlIrecordPath_req & "\" & tempLocalFile, True)
 
                 statussend = True
             End If
@@ -141,6 +157,127 @@ Public Class MASPISServices
             ShowMessage(rtbox, StaticValue.STATUSERROR, "" + ex.Message + ex.StackTrace)
         End Try
     End Sub
+
+
+    '########################################################################################################################################
+    '  Generate Info Record for maspis
+    '########################################################################################################################################
+
+    Public Shared Function GetInfoRecordMaspis(ByVal ConStr As String, ByVal rtbox As RichTextBox) As Boolean
+        Dim iStatus As Boolean = True
+        Dim tempLocalPath As String = ""
+        Dim tempLocalFile As String = ""
+
+        Try
+            Dim statussend As Boolean = False
+
+            Dim pathResult As CallProcedureResult = ClsInterfaceSettingDB.getData()
+
+            If String.IsNullOrEmpty(pathResult.ResultMessage) Then
+                xmlPath_req = Trim(pathResult.DataResult.Rows(0).Item("PAQuotReqPath"))
+            Else
+                Throw New ArgumentException(" Automatic process error ... please setting " & titleServices & " Path ")
+            End If
+
+
+            Dim result As CallProcedureResult = SPQuotationMasPis.SAPInfoRecordRequest()
+
+            If Not String.IsNullOrEmpty(result.ResultMessage) Then
+                Throw New ArgumentException(" An error when getting the data request, error descriptions : " & result.ErrorMessage)
+            End If
+
+            If result.DataResult.Rows.Count > 0 Then
+                ShowMessage(rtbox, StaticValue.STATUSINFO, " START Generate " & titleServices & " XML To SAP!")
+
+                tempLocalPath = Application.StartupPath & "\Import\"
+
+                If Not System.IO.Directory.Exists(tempLocalPath) Then
+                    System.IO.Directory.CreateDirectory(tempLocalPath)
+                End If
+
+                tempLocalFile = "In" & infoRecordNameReq & "_" & Format(Now, "yyyymmdd_hhmmss_mss") & ".xml"
+
+                Dim writeElement = New XmlStartElement() With {.StartElementXML = "ns0:MT_EPIC2_InfoRecord_Req", .StartAttribute = "xmlns:ns0", .WriteString = "http://iamiepic2", .StartElementXMLFile = String.Empty, .StartElemtnXMLRequest = "FT_INFORECORD_REQUEST"}
+
+                Dim writeResp As ResponseStatus = WriteToXML(tempLocalPath & tempLocalFile, result.DataResult, writeElement)
+
+                If writeResp.StatusResp = False Then
+                    ShowMessage(rtbox, 2, "START Generate " & titleServices & " XML To SAP!")
+                End If
+
+                ShowMessage(rtbox, StaticValue.STATUSINFO, " Interface Process " & titleServices & " XML To SAP Success !")
+
+                '=====================================
+                ' Update MasPis data
+                '=====================================
+
+                'Move XML File
+                My.Computer.FileSystem.MoveFile(tempLocalPath & tempLocalFile, xmlPath_req & "\" & tempLocalFile, True)
+
+                statussend = True
+            End If
+
+            If statussend = False Then
+
+                ShowMessage(rtbox, 6, " No Data " & titleServices & " XML To SAP ! ")
+
+                ShowMessage(rtbox, StaticValue.STATUSINFO, " END Interface Generate " & titleServices & " XML To SAP!")
+
+                iStatus = False
+                Return iStatus
+            Else
+                ShowMessage(rtbox, StaticValue.STATUSINFO, " END Interface Generate " & titleServices & " XML To SAP!")
+
+                Return iStatus
+            End If
+
+        Catch ex As Exception
+            For Each deleteFile In Directory.GetFiles(tempLocalPath, tempLocalFile, SearchOption.TopDirectoryOnly)
+                File.Delete(deleteFile)
+            Next
+
+            ShowMessage(rtbox, 2, " Error Interface Process " & titleServices & " XML To SAP... " & " [" & Err.Number & "]" & Err.Description)
+
+            ShowMessage(rtbox, StaticValue.STATUSINFO, " END Interface Generate " & titleServices & " XML To SAP!")
+
+            iStatus = False
+            Return iStatus
+        End Try
+        Return iStatus
+    End Function
+
+    '########################################################################################################################################
+    '  Getting Response Info Record for maspis
+    '########################################################################################################################################
+
+    Public Shared Sub InfoRecordResp(ByVal ConStr As String, ByVal rtbox As RichTextBox)
+        Try
+
+            Dim dtPath = ClsInterfaceSettingDB.getData(ConStr)
+
+            If dtPath.Rows.Count > 0 Then
+                xmlPath_res = Trim(dtPath.Rows(0).Item("PAQuotResPath"))
+                xmlPathBackup_res = Trim(dtPath.Rows(0).Item("PAQuotResBackupPath"))
+            Else
+                ShowMessage(rtbox, StaticValue.STATUSERROR, " Automatic Process Error ... Please Setting Interface for " & titleServices & " - Response Path ")
+                Exit Sub
+            End If
+
+            ' Call to check for response or cost target files
+            Dim fileList As FileInfo() = IsResponseOrCostTarget()
+            If fileList IsNot Nothing AndAlso fileList.Length > 0 Then
+                Check(fileList, rtbox, ConStr)
+            Else
+                ShowMessage(rtbox, StaticValue.STATUSINFO, "No relevant XML files found.")
+            End If
+
+        Catch ex As Exception
+            ShowMessage(rtbox, StaticValue.STATUSERROR, "" + ex.Message + ex.StackTrace)
+        End Try
+    End Sub
+
+
+#Region "EXTENSIONS"
 
     Private Shared Function IsResponseOrCostTarget() As FileInfo()
         Dim di As New IO.DirectoryInfo(xmlPath_res)
@@ -298,21 +435,23 @@ Public Class MASPISServices
         Return propParam
     End Function
 
-
-
-    Private Shared Function WriteToXML(ByVal xmlFilePath As String, ByVal dtMasPis As DataTable) As ResponseStatus
+    Private Shared Function WriteToXML(ByVal xmlFilePath As String, ByVal dtMasPis As DataTable, ByVal xmlPath As XmlStartElement) As ResponseStatus
         Try
             Dim writer As New XmlTextWriter(xmlFilePath, New UpperCaseUTF8Encoding())
             writer.Formatting = Xml.Formatting.Indented
 
             writer.WriteStartDocument()
             writer.Indentation = 2
-            writer.WriteStartElement("ns0:MT_EPIC2_Quotation_Req")
-            writer.WriteStartAttribute("xmlns:ns0")
-            writer.WriteString("http://iamiepic2")
-            writer.WriteStartElement("FI_FILEXML")
-            writer.WriteEndElement()
-            writer.WriteStartElement("FT_QUOTATION_REQUEST")
+            writer.WriteStartElement(xmlPath.StartElementXML)
+            writer.WriteStartAttribute(xmlPath.StartAttribute)
+            writer.WriteString(xmlPath.WriteString)
+
+            If Not String.IsNullOrEmpty(xmlPath.StartElemtnXMLRequest) Then
+                writer.WriteStartElement(xmlPath.StartElementXMLFile)
+                writer.WriteEndElement()
+            End If
+           
+            writer.WriteStartElement(xmlPath.StartElemtnXMLRequest)
 
             Mapper.Map(Of QuotationMasPisReq)(dtMasPis, writer, "item")
 
@@ -325,10 +464,21 @@ Public Class MASPISServices
             Return New ResponseStatus(False, ex.Message)
         End Try
     End Function
+#End Region
+
 
     Private Shared Sub ShowMessage(ByVal rtbox As RichTextBox, ByVal Color As Integer, Optional ByVal Message As String = "")
         Dim lsStepProcess = "[" & Format(Now, "yyyy-MM-dd HH:mm:ss") & "] " & Message & vbCrLf
         GridProcess.upGridProcess(rtbox, Color, 0, lsStepProcess)
     End Sub
+
+End Class
+
+Public Class XmlStartElement
+    Public Property StartElementXML As String
+    Public Property StartAttribute As String
+    Public Property WriteString As String
+    Public Property StartElementXMLFile As String
+    Public Property StartElemtnXMLRequest As String
 
 End Class

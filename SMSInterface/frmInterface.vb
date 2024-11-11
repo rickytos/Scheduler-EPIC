@@ -127,6 +127,7 @@ Public Class frmInterface
         'Interace MasPIS
         MASPISServices.GenQuotationMasPis(ConStr, Rtb1)
         MASPISServices.MASPISProcess(ConStr, Rtb1)
+        MASPISServices.GetInfoRecordMaspis(ConStr, Rtb1)
 
         'Interface CostHistory
 
@@ -280,6 +281,7 @@ Public Class frmInterface
                 'Interface MasPis
                 MASPISServices.GenQuotationMasPis(ConStr, Rtb1)
                 MASPISServices.MASPISProcess(ConStr, Rtb1)
+                MASPISServices.GetInfoRecordMaspis(ConStr, Rtb1)
 
             End If
 

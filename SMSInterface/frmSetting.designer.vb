@@ -115,6 +115,12 @@ Partial Class frmSetting
         Me.Label44 = New System.Windows.Forms.Label()
         Me.Label45 = New System.Windows.Forms.Label()
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
+        Me.txtInfoRecordMaspis = New System.Windows.Forms.TextBox()
+        Me.Label42 = New System.Windows.Forms.Label()
+        Me.txtInfoRecordMaspisResp = New System.Windows.Forms.TextBox()
+        Me.Label46 = New System.Windows.Forms.Label()
+        Me.txtInfoRecordMaspisRespBackup = New System.Windows.Forms.TextBox()
+        Me.Label47 = New System.Windows.Forms.Label()
         Me.GroupBox1.SuspendLayout()
         Me.TabEmailSettings.SuspendLayout()
         Me.TabPage1.SuspendLayout()
@@ -942,7 +948,14 @@ Partial Class frmSetting
         '
         'tpQuotationMaspis
         '
+        Me.tpQuotationMaspis.AutoScroll = True
         Me.tpQuotationMaspis.BackColor = System.Drawing.SystemColors.Control
+        Me.tpQuotationMaspis.Controls.Add(Me.txtInfoRecordMaspisRespBackup)
+        Me.tpQuotationMaspis.Controls.Add(Me.Label47)
+        Me.tpQuotationMaspis.Controls.Add(Me.txtInfoRecordMaspisResp)
+        Me.tpQuotationMaspis.Controls.Add(Me.Label46)
+        Me.tpQuotationMaspis.Controls.Add(Me.txtInfoRecordMaspis)
+        Me.tpQuotationMaspis.Controls.Add(Me.Label42)
         Me.tpQuotationMaspis.Controls.Add(Me.txtQuotationResponseBackupPath)
         Me.tpQuotationMaspis.Controls.Add(Me.txtQuotationResponsePath)
         Me.tpQuotationMaspis.Controls.Add(Me.txtQuotationRequestPath)
@@ -960,14 +973,14 @@ Partial Class frmSetting
         '
         'txtQuotationResponseBackupPath
         '
-        Me.txtQuotationResponseBackupPath.Location = New System.Drawing.Point(328, 127)
+        Me.txtQuotationResponseBackupPath.Location = New System.Drawing.Point(328, 148)
         Me.txtQuotationResponseBackupPath.Name = "txtQuotationResponseBackupPath"
         Me.txtQuotationResponseBackupPath.Size = New System.Drawing.Size(286, 21)
         Me.txtQuotationResponseBackupPath.TabIndex = 67
         '
         'txtQuotationResponsePath
         '
-        Me.txtQuotationResponsePath.Location = New System.Drawing.Point(328, 98)
+        Me.txtQuotationResponsePath.Location = New System.Drawing.Point(328, 119)
         Me.txtQuotationResponsePath.Name = "txtQuotationResponsePath"
         Me.txtQuotationResponsePath.Size = New System.Drawing.Size(286, 21)
         Me.txtQuotationResponsePath.TabIndex = 66
@@ -982,7 +995,7 @@ Partial Class frmSetting
         'Label40
         '
         Me.Label40.AutoSize = True
-        Me.Label40.Location = New System.Drawing.Point(23, 127)
+        Me.Label40.Location = New System.Drawing.Point(23, 148)
         Me.Label40.Name = "Label40"
         Me.Label40.Size = New System.Drawing.Size(210, 13)
         Me.Label40.TabIndex = 63
@@ -991,7 +1004,7 @@ Partial Class frmSetting
         'Label41
         '
         Me.Label41.AutoSize = True
-        Me.Label41.Location = New System.Drawing.Point(23, 101)
+        Me.Label41.Location = New System.Drawing.Point(23, 122)
         Me.Label41.Name = "Label41"
         Me.Label41.Size = New System.Drawing.Size(170, 13)
         Me.Label41.TabIndex = 62
@@ -1010,7 +1023,7 @@ Partial Class frmSetting
         '
         Me.Label44.AutoSize = True
         Me.Label44.Font = New System.Drawing.Font("Tahoma", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label44.Location = New System.Drawing.Point(23, 73)
+        Me.Label44.Location = New System.Drawing.Point(23, 94)
         Me.Label44.Name = "Label44"
         Me.Label44.Size = New System.Drawing.Size(62, 13)
         Me.Label44.TabIndex = 59
@@ -1035,6 +1048,54 @@ Partial Class frmSetting
         Me.GroupBox2.TabIndex = 11
         Me.GroupBox2.TabStop = False
         Me.GroupBox2.Text = "Interface Settings"
+        '
+        'txtInfoRecordMaspis
+        '
+        Me.txtInfoRecordMaspis.Location = New System.Drawing.Point(328, 67)
+        Me.txtInfoRecordMaspis.Name = "txtInfoRecordMaspis"
+        Me.txtInfoRecordMaspis.Size = New System.Drawing.Size(286, 21)
+        Me.txtInfoRecordMaspis.TabIndex = 69
+        '
+        'Label42
+        '
+        Me.Label42.AutoSize = True
+        Me.Label42.Location = New System.Drawing.Point(23, 69)
+        Me.Label42.Name = "Label42"
+        Me.Label42.Size = New System.Drawing.Size(122, 13)
+        Me.Label42.TabIndex = 68
+        Me.Label42.Text = "Info Record Path Folder"
+        '
+        'txtInfoRecordMaspisResp
+        '
+        Me.txtInfoRecordMaspisResp.Location = New System.Drawing.Point(328, 178)
+        Me.txtInfoRecordMaspisResp.Name = "txtInfoRecordMaspisResp"
+        Me.txtInfoRecordMaspisResp.Size = New System.Drawing.Size(286, 21)
+        Me.txtInfoRecordMaspisResp.TabIndex = 71
+        '
+        'Label46
+        '
+        Me.Label46.AutoSize = True
+        Me.Label46.Location = New System.Drawing.Point(23, 178)
+        Me.Label46.Name = "Label46"
+        Me.Label46.Size = New System.Drawing.Size(132, 13)
+        Me.Label46.TabIndex = 70
+        Me.Label46.Text = "Info Record -  Path Folder"
+        '
+        'txtInfoRecordMaspisRespBackup
+        '
+        Me.txtInfoRecordMaspisRespBackup.Location = New System.Drawing.Point(328, 208)
+        Me.txtInfoRecordMaspisRespBackup.Name = "txtInfoRecordMaspisRespBackup"
+        Me.txtInfoRecordMaspisRespBackup.Size = New System.Drawing.Size(286, 21)
+        Me.txtInfoRecordMaspisRespBackup.TabIndex = 73
+        '
+        'Label47
+        '
+        Me.Label47.AutoSize = True
+        Me.Label47.Location = New System.Drawing.Point(23, 208)
+        Me.Label47.Name = "Label47"
+        Me.Label47.Size = New System.Drawing.Size(169, 13)
+        Me.Label47.TabIndex = 72
+        Me.Label47.Text = "Info Record -  Backup Path Folder"
         '
         'frmSetting
         '
@@ -1171,4 +1232,10 @@ Partial Class frmSetting
     Friend WithEvents Label43 As System.Windows.Forms.Label
     Friend WithEvents Label44 As System.Windows.Forms.Label
     Friend WithEvents Label45 As System.Windows.Forms.Label
+    Friend WithEvents txtInfoRecordMaspisRespBackup As System.Windows.Forms.TextBox
+    Friend WithEvents Label47 As System.Windows.Forms.Label
+    Friend WithEvents txtInfoRecordMaspisResp As System.Windows.Forms.TextBox
+    Friend WithEvents Label46 As System.Windows.Forms.Label
+    Friend WithEvents txtInfoRecordMaspis As System.Windows.Forms.TextBox
+    Friend WithEvents Label42 As System.Windows.Forms.Label
 End Class

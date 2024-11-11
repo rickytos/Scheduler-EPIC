@@ -53,5 +53,16 @@ Public Class SPQuotationMasPis
     '    Return CallProcedures(Of CostHistorySAPRes)(newParam)
 
     'End Function
+    Public Shared Function SAPInfoRecordRequest()
+
+        Return CallProcedures("SP_IF_GetInforecordMaspisRequest")
+
+    End Function
+
+    'Public Shared Function SAPInfoReordResponse()
+    '    Dim newParam As New ParamCallFunction(Of QuotationMaspisCostTarget) With {.StoreProcedure = "SP_IF_GetCostTargetQuotation", .Parameter = Param}
+
+    '    Return CallProcedures(Of QuotationMaspisCostTarget)(newParam)
+    'End Function
 
 End Class
